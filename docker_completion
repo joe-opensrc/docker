@@ -74,17 +74,3 @@ complete -F _container_names_filter dstop
 complete -F _container_names_filter dex 
 
 
-function yy(){
-  echo 'because'
-}
-
-function _yy(){
-
-   local cur prev words cword split
-   _init_completion || return 
-
-  COMPREPLY=( "foo" "bar" )
-
-}
-
-complete -F _yy yy
