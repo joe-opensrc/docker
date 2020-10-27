@@ -21,7 +21,7 @@ function dstart(){
 
 function dstop()
 {
- docker stop "${@}" 
+  docker stop "${@}" 
 } 
 
 
