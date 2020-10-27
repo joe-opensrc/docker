@@ -1,13 +1,11 @@
 ## source this file to make use of its contents
 
-source /home/kane/Projects/docker/bash/docker_completion
-
 function dex(){
   docker exec -e "COLUMNS=$( tput cols )" -e "LINES=$( tput lines )" -it "$@"
 }
 
-
-DOCKER_CONTAINERS_UNTOUCHABLE="(CONTAINER ID|squid|exim|spamassassin|bind9|mdb|nginx)"
+# add pipe-delimeted container names to DOCKER_CONTAINERS_UNTOUCHABLE: "(CONTAINER ID|shiny-container|another)"
+DOCKER_CONTAINERS_UNTOUCHABLE="(CONTAINER ID)"
 function dc()
 {
  IFS=$'\n'
