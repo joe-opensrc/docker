@@ -1,0 +1,133 @@
+## source this file to make use of its contents
+
+source /home/kane/Projects/docker/bash/docker_completion
+
+function dex(){
+  docker exec -e "COLUMNS=$( tput cols )" -e "LINES=$( tput lines )" -it "$@"
+}
+
+
+DOCKER_CONTAINERS_UNTOUCHABLE="(CONTAINER ID|squid|exim|spamassassin|bind9|mdb|nginx)"
+function dc()
+{
+ IFS=$'\n'
+  dc_ids="$( docker ps -a | grep -Ev "${DOCKER_CONTAINERS_UNTOUCHABLE}" | awk '{print $1}' )"
+  docker rm ${dc_ids} 2>/dev/null
+ IFS=$' \t\n'
+ docker rmi $( docker images --filter='dangling=true' -q) 2>/dev/null
+}
+
+function dstart(){
+  docker start "${@}"
+}
+
+function dstop()
+{
+ docker stop "${@}" 
+} 
+
+
+# dnet -- list 'container_name|ip' for running containers; 'container_name|x.x.x.x' for those not connected to a network
+function dnet() {
+
+  ofs="|" 
+  vals_only=1 # TODO: logic needs improving to handle: '-g -v' => gateway value only
+  bridge=1
+  gways=1
+
+  function usage() {
+   cat <<-EOU
+
+  Usage: ${FUNCNAME[0]} [-O <ofs>] [-bfgv] [<container>...]
+
+    -O <ofs>       := Output field separator
+    -b             := include bridge names
+    -f             := full info
+    -g             := include gateway ips
+    -v             := only values (i.e., ip address)
+    <container>... := a list of specific containers 
+                     \ Without specific names list all running containers.
+
+EOU
+  }
+
+  echo "${@}" | grep -q -e '--help' -e '-h' && usage && return 0
+  while getopts 'O:bfgv' flag 
+  do
+   case "${flag}" in
+    O) ofs="${OPTARG}";;
+    b) bridge=0;;
+    f) bridge=0; gways=0; vals_only=1;;
+    g) gways=0;;
+    v) vals_only=0;;
+    \?) usage; return 1;;
+   esac
+  shift $(( ${OPTIND} - 1 ))
+  OPTIND=
+  done
+
+
+  ## without args get all 'names|ips' of running containers
+  if [[ ${#} -eq 0 ]]
+  then    
+    set -- $( docker ps --format '{{.Names}}' )
+  fi
+
+  #foreach container, get name and ip; if no ip, return a str of x's
+  jq_filter='.[] as $cnt | $cnt.Name as $name | $cnt.NetworkSettings.Networks as $net | ( $net | keys[] ) as $intf | $net[].Gateway as $gw | $net[].IPAddress as $ip | (if ( $ip | length ) > 0 then $ip else "x.x.x.x" end ) as $ip | '
+
+
+
+  if [[ ${vals_only} -eq 0 ]]
+  then 
+    # return just ip
+    jq_filter="${jq_filter} \$ip"
+  else
+
+    jq_ofs="\"${ofs}\""
+    jq_filter="${jq_filter} \$name[1:], ${jq_ofs}, \$ip" 
+
+    if [[ ${bridge} -eq 0 ]]
+    then
+      jq_filter="${jq_filter}, ${jq_ofs}, \$intf"
+    fi
+
+    if [[ ${gways} -eq 0 ]]
+    then
+      jq_filter="${jq_filter}, ${jq_ofs}, \$gw"
+    fi
+
+    # strip leading '/' from name and return 'name|ip'
+    # jq_filter="${jq_filter} \$name[1:], \"${ofs}\", \$ip, \"${ofs}\", \$intf, \"${ofs}\", \$gw"
+  fi
+  
+  # add a newline per record
+  jq_filter="${jq_filter}, \"\n\""
+
+  # run command
+  docker inspect "${@}" | jq -jc "${jq_filter}"
+
+}
+
+
+function di() {
+  # docker filter is a bit crap. '/' is special
+  if [[ $# -eq 0 ]]
+  then
+    docker images 
+  else
+
+    local args="${@}"
+    args=${args:-*/*:*}
+    dmis=$( docker images --filter=reference="${args}" )
+
+    if [[ $( echo "${dmis}" | wc -l ) -gt 1 ]]
+    then
+      echo "${dmis}"
+    else
+      echo -ne "\n  No Images match filter: \"${args}\"\n\n" >&2
+    fi
+
+  fi
+
+}

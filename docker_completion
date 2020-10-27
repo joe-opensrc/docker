@@ -1,0 +1,90 @@
+
+# bash_completion 
+source /usr/share/bash-completion/bash_completion
+
+ function _fun(){ 
+
+  local cur prev words cword args cmd;
+  _init_completion || return;
+
+  cmd="${words[@]:0:1}"
+  case "${cmd}" in
+
+    dnet)  
+      
+      # complete containers; remove duplicates 
+      cnts=( "$( docker ps --format '{{.Names}}' --filter status=running )" );
+      args=( -O -b -g -v ${cnts[*]} );
+      for w in "${words[@]}"
+      do
+        #don't delete partial matches
+        if [[ "${cur}" != "${w}" ]]
+        then 
+          #filter out the word from possible completions 
+          args=( "${args[@]/${w}}" )
+        fi
+      done
+ 
+      case "${prev}" in
+        -O) args=() 
+      esac;;
+
+  esac
+
+      # COMPREPLY=( $( compgen -W "-O -b -g -v ${cnts[*]}" -- "${cur}" ) );
+  COMPREPLY=( $( compgen -W "${args[*]}" -- ${cur} ));
+}
+
+# enable tab-completion for docker functions; filter out already completed container names
+function _container_names_filter(){
+
+  #initialise 
+  local cur prev words cword split
+  _init_completion || return 1
+
+  # do what for which function? 
+  # case "${prev}" in
+  case "${words[@]:0:${cword}}" in
+    #list all running container names for specified functions
+    dnet)
+      COMPREPLY+=( $( compgen -W "-O -b -g -v" -- "${cur}" ) );&
+    dstop|dex)  containers=( "$( docker ps --format '{{.Names}}' --filter status=running )" );;
+    dstart)     containers=( "$( docker ps --format '{{.Names}}' --filter status=exited --filter status=paused )" );;
+    #for each word already seen     
+    *) for w in "${words[@]}"
+      do
+        #don't delete partial matches
+        if [[ "${cur}" != "${w}" ]]
+        then 
+          #filter out the word from possible completions 
+          cnts=( "${containers[@]/${w}}" )
+        fi
+      done;
+      #filtered array
+      containers=( "${cnts[@]}" );;
+  esac
+
+  #return the possible completions
+  COMPREPLY+=( $( compgen -W "${containers[@]}" -- "${cur}" ) ) 
+
+} 
+complete -F _fun dnet
+complete -F _container_names_filter dstart 
+complete -F _container_names_filter dstop 
+complete -F _container_names_filter dex 
+
+
+function yy(){
+  echo 'because'
+}
+
+function _yy(){
+
+   local cur prev words cword split
+   _init_completion || return 
+
+  COMPREPLY=( "foo" "bar" )
+
+}
+
+complete -F _yy yy
