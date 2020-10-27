@@ -1,19 +1,9 @@
-# bootstrap functions
-source ~/.bash_functions-bootstrap || \
- { echo -ne "Couldn't Import Bootstrap Functions.  This is bad; as in not good :(\n" >&2; \
-   return 9; }
 
-assert_is_sourced
-
+# generic docker aliases to save fingers
 alias da="docker ps -a"
-#alias di="docker images"
 alias diz="di | fzfr --header-lines=1 | afs -o 1,2 | sed -e 's/ \+/:/'"
-alias dps="docker ps"
-alias dls="docker ps"
 alias dp="docker pull"
 alias dr="docker run -it "
 alias drd="docker run -d "
-alias ddns="docker run --detach --network dns_resolver --ip 10.40.0.21 --name bind9 --restart unless-stopped drzeb/alpine-bind9"
-alias dv="docker run -v /tmp/.X11-unix:/tmp/.X11-unix -e 'DISPLAY=:0' --device /dev/dri/card0 "
-alias sp="docker run --rm -d -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=${DISPLAY} --device /dev/dri/card0 -it --name pokerth drzeb/xenial-pokerth"
+alias drv="docker run -v /tmp/.X11-unix:/tmp/.X11-unix -e 'DISPLAY=:0' --device /dev/dri/card0 "
 
