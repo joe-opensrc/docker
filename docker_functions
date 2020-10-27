@@ -4,7 +4,7 @@ function dex(){
   docker exec -e "COLUMNS=$( tput cols )" -e "LINES=$( tput lines )" -it "$@"
 }
 
-# add pipe-delimeted container names to DOCKER_CONTAINERS_UNTOUCHABLE: "(CONTAINER ID|shiny-container|another)"
+# add pipe-delimited container names to DOCKER_CONTAINERS_UNTOUCHABLE: "(CONTAINER ID|shiny-container|another)"
 DOCKER_CONTAINERS_UNTOUCHABLE="(CONTAINER ID)"
 function dc()
 {
