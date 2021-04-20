@@ -132,7 +132,7 @@ function di() {
 
 function docker_registry() {
 
-  local U="{{ registry.server }}:{{ registry.http.addr.port }}"
+  local U="https://localhost:5000"
   local d=1 # include digests 
   local r=1 # repos only 
 
