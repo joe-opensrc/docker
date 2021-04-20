@@ -129,3 +129,75 @@ function di() {
   fi
 
 }
+
+function docker_registry() {
+
+  local U="{{ registry.server }}:{{ registry.http.addr.port }}"
+  local d=1 # include digests 
+  local r=1 # repos only 
+
+  local digest="" repos="" tags=""
+
+  usg="
+      
+      Usage: ${FUNCNAME[0]} [-U <registry_uri>] [-d] [-h] [-r]
+        
+      -U := docker registry uri, e.g., https://localhost:5000 
+      -d := include digests
+      -h := this help
+      -r := list repos only (default is to list all tagged images)
+      
+"
+
+  OPTIND=
+  while getopts 'U:dhr' arg
+  do
+    case "${arg}" in
+      U) U="${OPTARG}";;
+      d) d=0;;
+      h) echo -ne "${usg}"; return 0;;
+      r) r=0;;
+    esac
+  shift $(( OPTIND - 1 ))
+  OPTIND=
+  done
+
+  repos="$( wget --no-check-certificate -q -O- https://${U}/v2/_catalog | jq -r '.repositories[]' )"
+
+  if [[ ${r} -eq 0 ]]
+  then
+    echo "${repos}"
+    return 0
+  fi
+
+  for r in ${repos}
+  do 
+
+    tags=( $( wget -q --no-check-certificate  -O - "https://${U}/v2/${r}/tags/list" | jq -r '.tags[]' ) )
+
+    for t in "${tags[@]}"
+    do   
+
+      if [[ ${d} -eq 0 ]]
+      then
+
+        digest=$( wget -S -O /dev/null \
+                    --no-check-certificate \
+                    --header="Accept: application/vnd.docker.distribution.manifest.v2+json" \
+                    https://${U}/v2/${r}/manifests/${t} 2>&1 \
+                  | grep Docker-Content-Digest | cut -d':' -f 3 
+                )
+
+        echo -e "${U}/${r}:${t}\t${digest:0:12}"
+
+      else 
+
+        echo "${U}/${r}:${t}"
+
+      fi
+
+    done
+
+  done
+
+}
