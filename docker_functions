@@ -196,8 +196,8 @@ function docker_registry() {
 
       fi
 
-    done
+    done 
 
-  done
+  done | column -t 
 
 }
