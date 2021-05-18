@@ -181,11 +181,11 @@ function docker_registry() {
       if [[ ${d} -eq 0 ]]
       then
 
-        digest=$( wget -S -O /dev/null \
+        digest=$( wget -q -O- \
                     --no-check-certificate \
                     --header="Accept: application/vnd.docker.distribution.manifest.v2+json" \
                     https://${U}/v2/${r}/manifests/${t} 2>&1 \
-                  | grep Docker-Content-Digest | cut -d':' -f 3 
+                  | jq -r '.config.digest' | cut -c 8-19
                 )
 
         echo -e "${U}/${r}:${t}\t${digest:0:12}"
