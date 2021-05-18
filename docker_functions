@@ -132,7 +132,7 @@ function di() {
 
 function docker_registry() {
 
-  local U="https://localhost:5000"
+  local U="http://localhost:5000"
   local d=1 # include digests 
   local r=1 # repos only 
 
@@ -162,7 +162,7 @@ function docker_registry() {
   OPTIND=
   done
 
-  repos="$( wget --no-check-certificate -q -O- https://${U}/v2/_catalog | jq -r '.repositories[]' )"
+  repos="$( wget --no-check-certificate -q -O- ${U}/v2/_catalog | jq -r '.repositories[]' )"
 
   if [[ ${r} -eq 0 ]]
   then
@@ -173,7 +173,7 @@ function docker_registry() {
   for r in ${repos}
   do 
 
-    tags=( $( wget -q --no-check-certificate  -O - "https://${U}/v2/${r}/tags/list" | jq -r '.tags[]' ) )
+    tags=( $( wget -q --no-check-certificate  -O - "${U}/v2/${r}/tags/list" | jq -r '.tags[]' ) )
 
     for t in "${tags[@]}"
     do   
@@ -184,7 +184,7 @@ function docker_registry() {
         digest=$( wget -q -O- \
                     --no-check-certificate \
                     --header="Accept: application/vnd.docker.distribution.manifest.v2+json" \
-                    https://${U}/v2/${r}/manifests/${t} 2>&1 \
+                    ${U}/v2/${r}/manifests/${t} 2>&1 \
                   | jq -r '.config.digest' | cut -c 8-19
                 )
 
